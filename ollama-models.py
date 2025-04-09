@@ -438,7 +438,7 @@ def format_table(models, sizes_only=False):
     """
     # Define column headers and widths
     headers = ["Model", "Size", "Pop.", "Update", "Capabilities"]
-    widths = [25, 12, 10, 20, 30]  # Initial column widths
+    widths = [25, 23, 10, 20, 20]  # Further adjusted column widths - even wider Size, narrower Capabilities
     
     # Prepare data rows
     rows = []
@@ -447,10 +447,13 @@ def format_table(models, sizes_only=False):
         
         # Handle sizes
         if sizes_only and 'matched_sizes' in model:
+            # When showing individual sizes as separate rows
             sizes = model['matched_sizes']
         elif sizes_only and 'sizes' in model:
+            # When showing individual sizes as separate rows
             sizes = model['sizes']
-        elif 'sizes' in model:
+        elif 'sizes' in model and model['sizes']:
+            # Always show all sizes, let the column width handle truncation
             sizes = [', '.join(model['sizes'])]
         else:
             sizes = ['']
@@ -471,12 +474,9 @@ def format_table(models, sizes_only=False):
             else:
                 update_time = model.get('updated', '')
             
-            # Format capabilities (limit to first 3 for space)
+            # Format capabilities - show all and let the column handle truncation
             caps = model.get('capabilities', [])
-            if len(caps) > 3:
-                capabilities = ', '.join(caps[:3]) + '...'
-            else:
-                capabilities = ', '.join(caps)
+            capabilities = ', '.join(caps)
             
             # Add the row
             rows.append([model_id, size if sizes_only else sizes[0], popularity, update_time, capabilities])
@@ -500,9 +500,9 @@ def format_table(models, sizes_only=False):
     for row in rows:
         formatted_row = ""
         for i, cell in enumerate(row):
-            # Truncate if longer than width - 3 and add "..."
-            if len(cell) > widths[i] - 3:
-                cell = cell[:widths[i] - 3] + "..."
+            # Truncate if longer than width - 1 and add ellipsis character
+            if len(cell) > widths[i] - 1:
+                cell = cell[:widths[i] - 1] + "…"
             formatted_row += cell.ljust(widths[i]) + " | "
         formatted_rows.append(formatted_row)
     
