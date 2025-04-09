@@ -33,11 +33,18 @@ if [[ "$1" == "-V" ]] || [[ "$1" == "--version" ]]; then
 fi
 
 #cd .gudang
-wget -O library.html https://ollama.com/library
-# Remove form tags from the HTML for easier parsing
-html_deltags -D library.html -d form -O library-cleaned.html 
+declare -- library_cleaned=library-cleaned.html tmpfile=/tmp/"$$"-"$RANDOM".html
+: >"$library_cleaned"
 
+for page in newest popular; do
+  wget -O library.html "https://ollama.com/library?sort=$page"
+  # Remove form tags from the HTML for easier parsing
+  html_deltags -D library.html -d form -O "$tmpfile"
+  cat -s library.html >>"$library_cleaned"
+  echo -e "\n" >>"$library_cleaned"
+done
+rm -f "$tmpfile"
 # Output the name of the created file for confirmation
-echo "Created library-cleaned.html"
+echo "Created $library_cleaned"
 
 #fin
