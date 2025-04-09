@@ -1,5 +1,6 @@
 #!/bin/bash
 # install.sh - Ollama Models Toolbox installation script
+# Version: 1.0.0
 #
 # This script sets up the Ollama Models Toolbox environment:
 # - Creates canonical model directories if they don't exist
@@ -114,7 +115,13 @@ create_shortcuts() {
 }
 
 # Main execution
-info "Installing Ollama Models Toolbox"
+# Check for version flag
+if [[ "$1" == "-V" ]] || [[ "$1" == "--version" ]]; then
+  echo "Ollama Models Toolbox v1.0.0"
+  exit 0
+fi
+
+info "Installing Ollama Models Toolbox v1.0.0"
 setup_model_dirs
 setup_symlink
 install_deps

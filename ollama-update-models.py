@@ -2,6 +2,8 @@
 """
 ollama-update-models - Extract model information from Ollama's library page
 
+Version: 1.0.0
+
 This script extracts model information from the cleaned HTML of Ollama's library page
 and creates individual JSON files for each model with their attributes.
 
@@ -25,6 +27,7 @@ import json
 import os
 import re
 import sys
+import argparse
 from bs4 import BeautifulSoup
 
 def get_models_dir():
@@ -127,7 +130,25 @@ def extract_models():
     print(f"Extracted {len(model_items)} models to {OUTPUT_DIR}/")
     return model_items
 
-if __name__ == "__main__":
+def main():
+    parser = argparse.ArgumentParser(
+        description='Extract model information from Ollama\'s library page',
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    
+    parser.add_argument('-V', '--version', action='store_true',
+            help='Show version information')
+    
+    args = parser.parse_args()
+    
+    # Show version if requested
+    if args.version:
+        print("Ollama Models Toolbox v1.0.0")
+        sys.exit(0)
+    
     extract_models()
+
+if __name__ == "__main__":
+    main()
 
 #fin

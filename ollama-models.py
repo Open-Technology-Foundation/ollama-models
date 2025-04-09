@@ -2,6 +2,8 @@
 """
 ollama-models - Filter and search Ollama models based on various criteria
 
+Version: 1.0.0
+
 This script allows searching through Ollama models based on:
 - Model name
 - Capabilities/features
@@ -24,6 +26,7 @@ Options:
                            (defaults to system or user directory)
   -l, --list-capabilities  List all available capabilities
   -a, --all                List all models (all variants)
+  -V, --version            Show version information
   --help                   Show this help message
 
 Examples:
@@ -220,6 +223,8 @@ def main():
             help='List all available capabilities')
     parser.add_argument('-a', '--all', action='store_true',
             help='List all models (all variants)')
+    parser.add_argument('-V', '--version', action='store_true',
+            help='Show version information')
     
     args = parser.parse_args()
     
@@ -255,6 +260,11 @@ def main():
             print(f"  {cap}")
         sys.exit(0)
     
+    # Show version if requested
+    if args.version:
+        print("Ollama Models Toolbox v1.0.0")
+        sys.exit(0)
+        
     # Check if at least one filter is specified (or --all flag)
     if not (args.name or args.capability or args.size or args.popularity or args.all):
         parser.print_help()

@@ -1,4 +1,4 @@
-# Ollama Models Toolbox
+# Ollama Models Toolbox (v1.0.0)
 
 A collection of tools to extract, filter, and analyze models available for download on Ollama.com. 
 This toolbox helps you discover and select appropriate models for your needs based on capabilities, 
@@ -20,6 +20,9 @@ Downloads and cleans the HTML from Ollama's library page to prepare it for parsi
 
 ```bash
 ollama-update-models-library
+
+# Show version information
+ollama-update-models-library -V
 ```
 
 **Input:** None (downloads directly from ollama.com/library)  
@@ -31,6 +34,9 @@ Extracts model information from the cleaned HTML and creates individual JSON fil
 
 ```bash
 ollama-update-models
+
+# Show version information
+ollama-update-models -V
 ```
 
 **Input:** `library-cleaned.html`  
@@ -58,6 +64,9 @@ ollama-models -p top5
 
 # List all available capabilities
 ollama-models -l
+
+# Show version information
+ollama-models -V
 ```
 
 **Input:** Model JSON files  
@@ -91,6 +100,9 @@ Each model JSON file contains:
 
 ```bash
 ./install.sh
+
+# Show version information
+./install.sh -V
 ```
 
 3. Run the scripts in sequence:

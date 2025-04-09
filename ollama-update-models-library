@@ -1,5 +1,6 @@
 #!/bin/bash
 # ollama-update-models-library
+# Version: 1.0.0
 # 
 # This script downloads the raw HTML from Ollama's library page
 # and removes form elements to create a cleaned version
@@ -13,6 +14,12 @@
 # Output: library-cleaned.html (cleaned HTML ready for processing)
 #
 set -e
+
+# Display version if requested
+if [[ "$1" == "-V" ]] || [[ "$1" == "--version" ]]; then
+  echo "Ollama Models Toolbox v1.0.0"
+  exit 0
+fi
 
 #cd .gudang
 wget -O library.html https://ollama.com/library
