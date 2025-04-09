@@ -115,7 +115,22 @@ create_shortcuts() {
 }
 
 # Main execution
-# Check for version flag
+# Check for help or version flags
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+  echo "Usage: ./install.sh [OPTIONS]"
+  echo ""
+  echo "Installs the Ollama Models Toolbox:"
+  echo " - Creates canonical model directories if they don't exist"
+  echo " - Sets up symlinks to the appropriate model directory"
+  echo " - Installs required Python dependencies"
+  echo " - Makes scripts executable and creates symbolic links"
+  echo ""
+  echo "Options:"
+  echo "  -h, --help     Show this help message"
+  echo "  -V, --version  Show version information"
+  exit 0
+fi
+
 if [[ "$1" == "-V" ]] || [[ "$1" == "--version" ]]; then
   echo "Ollama Models Toolbox v1.0.0"
   exit 0

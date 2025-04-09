@@ -20,6 +20,7 @@ Options:
   -n, --name NAME          Filter by model name substring (case-insensitive)
   -c, --capability CAP     Filter by capability (e.g., vision, tools, embedding)
   -s, --size SIZE          Filter by parameter size (n, +n for >=n, -n for <=n) in billions
+                           Can be specified multiple times to create a range
   -p, --popularity POP     Filter by popularity: top<n> for top n models,
                            +<pulls> for >= pulls, -<pulls> for <= pulls
   -d, --models_dir DIR     Directory containing model JSON files
@@ -27,6 +28,7 @@ Options:
   -l, --list-capabilities  List all available capabilities
   -a, --all                List all models (all variants)
   -V, --version            Show version information
+  --debug                  Show debug information about the filtering process
   --help                   Show this help message
 
 Examples:
@@ -47,6 +49,15 @@ Examples:
   
   # Find top 5 most popular models
   ollama-models --popularity top5
+  
+  # Find models with size between 4B and 28B parameters
+  ollama-models --size +4 --size -28
+  
+  # Find vision-capable models between 3B and 8B parameters
+  ollama-models --capability vision --size +3 --size -8
+  
+  # Show debug information (useful for troubleshooting)
+  ollama-models --size +12 --size -49 --debug
 """
 import json
 import os
@@ -103,13 +114,14 @@ def parse_size(size_str):
     else:
         return value
 
-def size_matches_filter(size_str, size_filter):
+def size_matches_filter(size_str, size_filter, debug=False):
     """
     Check if a size matches the filter criteria
     
     Args:
         size_str: Size string (e.g. '7b')
         size_filter: Filter string (e.g. '7', '+7', '-7')
+        debug: Whether to print debug information
         
     Returns:
         bool: True if size matches filter, False otherwise
@@ -119,20 +131,34 @@ def size_matches_filter(size_str, size_filter):
         
     size_value = parse_size(size_str)
     if size_value is None:
+        if debug:
+            print(f"DEBUG: Could not parse size '{size_str}'", file=sys.stderr)
         return False
+        
+    if debug:
+        print(f"DEBUG: Comparing size {size_str} ({size_value}B) with filter {size_filter}", file=sys.stderr)
         
     if size_filter.startswith('+'):
         # Greater than or equal to
         filter_value = float(size_filter[1:])
-        return size_value >= filter_value
+        result = size_value >= filter_value
+        if debug:
+            print(f"DEBUG:   {size_value} >= {filter_value}: {result}", file=sys.stderr)
+        return result
     elif size_filter.startswith('-'):
         # Less than or equal to
         filter_value = float(size_filter[1:])
-        return size_value <= filter_value
+        result = size_value <= filter_value
+        if debug:
+            print(f"DEBUG:   {size_value} <= {filter_value}: {result}", file=sys.stderr)
+        return result
     else:
         # Exact match
         filter_value = float(size_filter)
-        return size_value == filter_value
+        result = size_value == filter_value
+        if debug:
+            print(f"DEBUG:   {size_value} == {filter_value}: {result}", file=sys.stderr)
+        return result
 
 def parse_pull_count(pull_count):
     """
@@ -213,8 +239,8 @@ def main():
             help='Filter by model name (case-insensitive substring match)')
     parser.add_argument('-c', '--capability',
             help='Filter by capability (e.g., vision, tools, embedding)')
-    parser.add_argument('-s', '--size',
-            help='Filter by parameter size (n, +n for >=n, -n for <=n) in billions')
+    parser.add_argument('-s', '--size', action='append',
+            help='Filter by parameter size (n, +n for >=n, -n for <=n) in billions, can be specified multiple times for a range')
     parser.add_argument('-p', '--popularity',
             help='Filter by popularity: top<n> for top n models, +<pulls> for >= pulls, -<pulls> for <= pulls')
     parser.add_argument('-d', '--models_dir',
@@ -225,6 +251,8 @@ def main():
             help='List all models (all variants)')
     parser.add_argument('-V', '--version', action='store_true',
             help='Show version information')
+    parser.add_argument('--debug', action='store_true',
+            help='Show debug information about the filtering process')
     
     args = parser.parse_args()
     
@@ -310,8 +338,19 @@ def main():
             if args.size:
                 matched_sizes = []
                 for size in model_data.get('sizes', []):
-                    if size_matches_filter(size, args.size):
+                    # Check if size matches ALL of the provided size filters
+                    matches_all_filters = True
+                    for size_filter in args.size:
+                        if not size_matches_filter(size, size_filter, args.debug):
+                            matches_all_filters = False
+                            break
+                    
+                    if matches_all_filters:
+                        if args.debug:
+                            print(f"DEBUG: Model {model_data['model']} size {size} matches all filters", file=sys.stderr)
                         matched_sizes.append(size)
+                    elif args.debug:
+                        print(f"DEBUG: Model {model_data['model']} size {size} does not match all filters", file=sys.stderr)
                 
                 # Only add if at least one size matches
                 if matched_sizes:

@@ -8,7 +8,14 @@ This script extracts model information from the cleaned HTML of Ollama's library
 and creates individual JSON files for each model with their attributes.
 
 Usage:
-  ollama-update-models
+  ollama-update-models [options]
+
+Options:
+  -i, --input FILE       Input HTML file path (default: library-cleaned.html)
+  -o, --output-dir DIR   Output directory for model JSON files
+                         (default: /usr/local/share/ollama/models or ~/.local/share/ollama/models)
+  -V, --version          Show version information
+  -h, --help             Show this help message
 
 Input:
   library-cleaned.html - The cleaned HTML file from Ollama's library page
@@ -133,11 +140,16 @@ def extract_models():
 def main():
     parser = argparse.ArgumentParser(
         description='Extract model information from Ollama\'s library page',
+        epilog=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     
     parser.add_argument('-V', '--version', action='store_true',
             help='Show version information')
+    parser.add_argument('-i', '--input', default=INPUT_FILE,
+            help=f'Input HTML file path (default: {INPUT_FILE})')
+    parser.add_argument('-o', '--output-dir',
+            help=f'Output directory for model JSON files (default: {OUTPUT_DIR})')
     
     args = parser.parse_args()
     
@@ -145,6 +157,15 @@ def main():
     if args.version:
         print("Ollama Models Toolbox v1.0.0")
         sys.exit(0)
+    
+    # Override constants if specified in args
+    global INPUT_FILE, OUTPUT_DIR
+    if args.input:
+        INPUT_FILE = args.input
+    if args.output_dir:
+        OUTPUT_DIR = args.output_dir
+        # Create output directory if it doesn't exist
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
     
     extract_models()
 
