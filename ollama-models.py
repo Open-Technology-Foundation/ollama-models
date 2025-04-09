@@ -32,6 +32,7 @@ Options:
                            (defaults to system or user directory)
   -l, --list-capabilities  List all available capabilities
   --long                   Display results in long format (tabular view with more details)
+  --update                 Update model data and exit (standalone command)
   -a, --all                List all models (all variants)
   -V, --version            Show version information
   --debug                  Show debug information about the filtering process
@@ -76,6 +77,9 @@ Examples:
   
   # Display results in a detailed tabular format
   ollama-models --name llama --long
+  
+  # Update model data (standalone command)
+  ollama-models --update
 """
 import json
 import os
@@ -83,6 +87,7 @@ import re
 import argparse
 import sys
 import datetime
+import subprocess
 import dateutil.parser
 import dateutil.relativedelta
 
@@ -438,7 +443,7 @@ def format_table(models, sizes_only=False):
     """
     # Define column headers and widths
     headers = ["Model", "Size", "Pop.", "Update", "Capabilities"]
-    widths = [25, 23, 10, 20, 20]  # Further adjusted column widths - even wider Size, narrower Capabilities
+    widths = [25, 29, 8, 18, 17]  # Adjusted per requirements: Size +6, Pop -2, Update -2, Capabilities -3
     
     # Prepare data rows
     rows = []
@@ -534,6 +539,8 @@ def main():
             help='List all available capabilities')
     parser.add_argument('--long', action='store_true',
             help='Display results in long format (tabular view with more details)')
+    parser.add_argument('--update', action='store_true',
+            help='Update model data and exit (runs ollama-update-models-library and ollama-update-models)')
     parser.add_argument('-a', '--all', action='store_true',
             help='List all models (all variants)')
     parser.add_argument('-V', '--version', action='store_true',
@@ -542,6 +549,20 @@ def main():
             help='Show debug information about the filtering process')
     
     args = parser.parse_args()
+    
+    # Check if update is requested - treat it as a standalone subcommand
+    if args.update:
+        try:
+            print("Updating Ollama model data...")
+            print("Running: ollama-update-models-library")
+            subprocess.run(["ollama-update-models-library"], check=True)
+            print("Running: ollama-update-models")
+            subprocess.run(["ollama-update-models"], check=True)
+            print("Update completed successfully.")
+            sys.exit(0)  # Exit after update is complete
+        except subprocess.SubprocessError as e:
+            print(f"Error during update: {e}")
+            sys.exit(1)  # Exit with error code on failure
     
     # Get the models directory
     models_dir = args.models_dir if args.models_dir else get_models_dir()

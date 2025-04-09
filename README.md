@@ -103,6 +103,9 @@ ollama-models -s +12 -s -49 --debug
 
 # Display detailed information in tabular format
 ollama-models -n llama --long
+
+# Update model data (standalone command)
+ollama-models --update
 ```
 
 **Input:** Model JSON files  
