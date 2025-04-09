@@ -31,6 +31,7 @@ Options:
   -d, --models_dir DIR     Directory containing model JSON files
                            (defaults to system or user directory)
   -l, --list-capabilities  List all available capabilities
+  --long                   Display results in long format (tabular view with more details)
   -a, --all                List all models (all variants)
   -V, --version            Show version information
   --debug                  Show debug information about the filtering process
@@ -72,6 +73,9 @@ Examples:
   
   # Find recently updated models with vision capability
   ollama-models --capability vision --updated 'after:1 month ago'
+  
+  # Display results in a detailed tabular format
+  ollama-models --name llama --long
 """
 import json
 import os
@@ -421,6 +425,91 @@ def determine_sort_order(arg_order, args):
     return default_sort
 
 
+def format_table(models, sizes_only=False):
+    """
+    Format models data into a tabular view
+    
+    Args:
+        models: List of model dictionaries
+        sizes_only: If True, create separate entries for each size variant
+        
+    Returns:
+        str: Formatted table as a string
+    """
+    # Define column headers and widths
+    headers = ["Model", "Size", "Pop.", "Update", "Capabilities"]
+    widths = [25, 12, 10, 20, 30]  # Initial column widths
+    
+    # Prepare data rows
+    rows = []
+    for model in models:
+        name = model['model']
+        
+        # Handle sizes
+        if sizes_only and 'matched_sizes' in model:
+            sizes = model['matched_sizes']
+        elif sizes_only and 'sizes' in model:
+            sizes = model['sizes']
+        elif 'sizes' in model:
+            sizes = [', '.join(model['sizes'])]
+        else:
+            sizes = ['']
+            
+        for size in sizes:
+            # Format the full model identifier
+            if size and sizes_only:
+                model_id = f"{name}:{size}"
+            else:
+                model_id = name
+                
+            # Format the popularity count
+            popularity = model.get('pull_count', '')
+            
+            # Format the update time (use relative time if available)
+            if 'updated_relative' in model:
+                update_time = model.get('updated_relative', '')
+            else:
+                update_time = model.get('updated', '')
+            
+            # Format capabilities (limit to first 3 for space)
+            caps = model.get('capabilities', [])
+            if len(caps) > 3:
+                capabilities = ', '.join(caps[:3]) + '...'
+            else:
+                capabilities = ', '.join(caps)
+            
+            # Add the row
+            rows.append([model_id, size if sizes_only else sizes[0], popularity, update_time, capabilities])
+    
+    # Truncate or pad each column to fit the width
+    formatted_rows = []
+    
+    # Add header row
+    header_row = ""
+    for i, header in enumerate(headers):
+        header_row += header.ljust(widths[i]) + " | "
+    formatted_rows.append(header_row)
+    
+    # Add separator row
+    separator = ""
+    for width in widths:
+        separator += "-" * width + "-+-"
+    formatted_rows.append(separator)
+    
+    # Add data rows
+    for row in rows:
+        formatted_row = ""
+        for i, cell in enumerate(row):
+            # Truncate if longer than width - 3 and add "..."
+            if len(cell) > widths[i] - 3:
+                cell = cell[:widths[i] - 3] + "..."
+            formatted_row += cell.ljust(widths[i]) + " | "
+        formatted_rows.append(formatted_row)
+    
+    # Join all rows with newlines
+    return "\n".join(formatted_rows)
+
+
 def main():
     """Main function to parse arguments and filter models"""
     parser = argparse.ArgumentParser(
@@ -443,6 +532,8 @@ def main():
             help='Directory containing model JSON files (defaults to system or user directory)')
     parser.add_argument('-l', '--list-capabilities', action='store_true',
             help='List all available capabilities')
+    parser.add_argument('--long', action='store_true',
+            help='Display results in long format (tabular view with more details)')
     parser.add_argument('-a', '--all', action='store_true',
             help='List all models (all variants)')
     parser.add_argument('-V', '--version', action='store_true',
@@ -605,24 +696,29 @@ def main():
         print("No models found matching the specified criteria.", file=sys.stderr)
         sys.exit(1)
     
-    # Output format: modelname:size for each variant    
-    for model in matches:
-        model_name = model['model']
-        
-        # If model has no sizes, just print the model name
-        if not model.get('sizes', []):
-            print(model_name)
-            continue
+    # Check if long format is requested
+    if args.long:
+        # Print tabular output
+        print(format_table(matches, sizes_only=bool(args.size)))
+    else:
+        # Output format: modelname:size for each variant    
+        for model in matches:
+            model_name = model['model']
             
-        # If size filter was specified, use the matched sizes
-        if args.size and 'matched_sizes' in model:
-            sizes = model['matched_sizes']
-        else:
-            sizes = model.get('sizes', [])
-            
-        # Print each model variant
-        for size in sizes:
-            print(f"{model_name}:{size}")
+            # If model has no sizes, just print the model name
+            if not model.get('sizes', []):
+                print(model_name)
+                continue
+                
+            # If size filter was specified, use the matched sizes
+            if args.size and 'matched_sizes' in model:
+                sizes = model['matched_sizes']
+            else:
+                sizes = model.get('sizes', [])
+                
+            # Print each model variant
+            for size in sizes:
+                print(f"{model_name}:{size}")
 
 if __name__ == "__main__":
     main()

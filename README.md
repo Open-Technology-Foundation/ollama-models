@@ -100,6 +100,9 @@ ollama-models -V
 
 # Debug size filtering (troubleshooting)
 ollama-models -s +12 -s -49 --debug
+
+# Display detailed information in tabular format
+ollama-models -n llama --long
 ```
 
 **Input:** Model JSON files  
