@@ -191,7 +191,8 @@ If this directory is not writable, the scripts fall back to:
 
 - Python 3.6+
 - BeautifulSoup4 library (`pip install beautifulsoup4`)
-- `html_deltags` command for processing HTML 
+- `html_deltags` command for processing HTML
+  - Available at: https://github.com/Open-Technology-Foundation/html_deltags
 
 ## License
 
