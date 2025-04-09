@@ -1,0 +1,25 @@
+#!/bin/bash
+# ollama-update-models-library
+# 
+# This script downloads the raw HTML from Ollama's library page
+# and removes form elements to create a cleaned version
+# that's easier to parse by subsequent scripts.
+#
+# Usage: ollama-update-models-library
+#
+# Requires: html_deltags command to be available
+#
+# Input: Downloads from https://ollama.com/library
+# Output: library-cleaned.html (cleaned HTML ready for processing)
+#
+set -e
+
+#cd .gudang
+wget -O library.html https://ollama.com/library
+# Remove form tags from the HTML for easier parsing
+html_deltags -D library.html -d form -O library-cleaned.html 
+
+# Output the name of the created file for confirmation
+echo "Created library-cleaned.html"
+
+#fin
