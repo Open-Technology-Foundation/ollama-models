@@ -15,8 +15,9 @@ parameter size, and popularity.
 The Ollama Models Toolbox provides tools to:
 
 1. Extract model information from Ollama's model library website
-2. Filter models based on various criteria (name, capabilities, parameter size, popularity)
+2. Filter models based on various criteria (name, capabilities, parameter size, popularity, update time)
 3. Get fully-qualified model names for all matching variants
+4. Sort results based on the last specified filter parameter
 
 ## Scripts
 
@@ -54,6 +55,9 @@ ollama-update-models -i custom-library.html
 
 # Specify custom output directory
 ollama-update-models -o /path/to/custom/models/dir
+
+# Show debug information during processing
+ollama-update-models --debug
 ```
 
 **Input:** `library-cleaned.html`  
@@ -81,6 +85,12 @@ ollama-models -s +4 -s -28
 
 # Find top 5 most popular models
 ollama-models -p top5
+
+# Find models updated within the last 3 months
+ollama-models -u 'since:3 months ago'
+
+# Find models updated before a specific date
+ollama-models -u before:2023-06-01
 
 # List all available capabilities
 ollama-models -l
@@ -112,7 +122,11 @@ Each model JSON file contains:
     "size1",
     "size2"
   ],
-  "pull_count": "1.2M"          // Number of pulls/downloads
+  "pull_count": "1.2M",         // Number of pulls/downloads
+  "updated": "2025-03-25 00:12:00", // Standardized timestamp (YYYY-MM-DD HH:MM:SS)
+  "updated_relative": "2 weeks ago", // Relative time as shown on website
+  "updated_raw": "Mar 25, 2025 12:12 AM UTC", // Raw timestamp from website
+  "tag_count": "5 tags"         // Number of tags
 }
 ```
 
@@ -152,6 +166,11 @@ Find top 10 most popular Llama models:
 ollama-models -n llama -p top10
 ```
 
+Find recently updated models with specific capabilities:
+```bash
+ollama-models -c vision -u 'after:1 month ago'
+```
+
 Find models with at least 1 million pulls:
 ```bash
 ollama-models -p +1M
@@ -177,6 +196,15 @@ Combine multiple criteria for precise filtering:
 ollama-models -n llama -c chat -s +7 -s -14 -p +500K
 ```
 
+Sort order is based on the last filter parameter specified:
+```bash
+# Sort by popularity (most popular first)
+ollama-models -n llama -s -15 -p +1M
+
+# Sort by size (smallest first)
+ollama-models -n llama -p +1M -s -15
+```
+
 ## Storage Locations
 
 The scripts use the following directory structure:
@@ -191,6 +219,7 @@ If this directory is not writable, the scripts fall back to:
 
 - Python 3.6+
 - BeautifulSoup4 library (`pip install beautifulsoup4`)
+- python-dateutil library (`pip install python-dateutil`)
 - `html_deltags` command for processing HTML
   - Available at: https://github.com/Open-Technology-Foundation/html_deltags
 

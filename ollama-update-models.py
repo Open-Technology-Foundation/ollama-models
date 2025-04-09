@@ -15,6 +15,7 @@ Options:
   -o, --output-dir DIR   Output directory for model JSON files
                          (default: /usr/local/share/ollama/models or ~/.local/share/ollama/models)
   -V, --version          Show version information
+  --debug                Show debug information during processing
   -h, --help             Show this help message
 
 Input:
@@ -22,7 +23,8 @@ Input:
 
 Output:
   Creates model JSON files in the models directory (default: /usr/local/share/ollama/models)
-  Each JSON file contains: model name, title, description, capabilities, sizes, pull count
+  Each JSON file contains: model name, title, description, capabilities, sizes, pull count,
+  updated timestamp, and tag count
 
 Dependencies:
   - BeautifulSoup4 library for HTML parsing
@@ -35,6 +37,7 @@ import os
 import re
 import sys
 import argparse
+import datetime
 from bs4 import BeautifulSoup
 
 def get_models_dir():
@@ -64,8 +67,13 @@ OUTPUT_DIR = get_models_dir()
 # Create output directory if it doesn't exist
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-def extract_models():
-    """Extract model data from the HTML file and save as JSON files"""
+def extract_models(debug=False):
+    """
+    Extract model data from the HTML file and save as JSON files
+    
+    Args:
+        debug: Whether to show debug information
+    """
     # Read the input file
     try:
         with open(INPUT_FILE, 'r') as f:
@@ -125,6 +133,36 @@ def extract_models():
         if pull_count_span:
             model_data['pull_count'] = pull_count_span.text.strip()
         
+        # Extract updated time
+        updated_span = model_item.select_one('span[x-test-updated]')
+        if updated_span:
+            # Store the relative time as displayed on the page
+            model_data['updated_relative'] = updated_span.text.strip()
+            
+            # Find the parent span with the exact timestamp in the title attribute
+            parent_span = updated_span.find_parent('span', attrs={'title': True})
+            if parent_span and 'title' in parent_span.attrs:
+                # Extract the raw timestamp from title attribute
+                raw_timestamp = parent_span['title']
+                model_data['updated_raw'] = raw_timestamp
+                
+                # Convert to standardized format (YYYY-MM-DD HH:MM:SS)
+                try:
+                    # Parse the date format "Mar 25, 2025 12:12 AM UTC"
+                    dt = datetime.datetime.strptime(raw_timestamp, "%b %d, %Y %I:%M %p UTC")
+                    # Format as YYYY-MM-DD HH:MM:SS
+                    model_data['updated'] = dt.strftime("%Y-%m-%d %H:%M:%S")
+                except (ValueError, TypeError) as e:
+                    # If parsing fails, just store the raw value
+                    model_data['updated'] = raw_timestamp
+                    if debug:
+                        print(f"Warning: Could not parse timestamp '{raw_timestamp}' for model {model_data['model']}: {e}", file=sys.stderr)
+        
+        # Extract tag count
+        tag_count_span = model_item.select_one('span[x-test-tag-count]')
+        if tag_count_span:
+            model_data['tag_count'] = tag_count_span.text.strip()
+        
         # Create filename using model name
         filename = f"{OUTPUT_DIR}/{model_data['model']}.json"
         
@@ -138,6 +176,8 @@ def extract_models():
     return model_items
 
 def main():
+    global INPUT_FILE, OUTPUT_DIR
+    
     parser = argparse.ArgumentParser(
         description='Extract model information from Ollama\'s library page',
         epilog=__doc__,
@@ -150,6 +190,8 @@ def main():
             help=f'Input HTML file path (default: {INPUT_FILE})')
     parser.add_argument('-o', '--output-dir',
             help=f'Output directory for model JSON files (default: {OUTPUT_DIR})')
+    parser.add_argument('--debug', action='store_true',
+            help='Show debug information during processing')
     
     args = parser.parse_args()
     
@@ -159,7 +201,6 @@ def main():
         sys.exit(0)
     
     # Override constants if specified in args
-    global INPUT_FILE, OUTPUT_DIR
     if args.input:
         INPUT_FILE = args.input
     if args.output_dir:
@@ -167,7 +208,7 @@ def main():
         # Create output directory if it doesn't exist
         os.makedirs(OUTPUT_DIR, exist_ok=True)
     
-    extract_models()
+    extract_models(args.debug)
 
 if __name__ == "__main__":
     main()

@@ -87,7 +87,7 @@ setup_symlink() {
 # Install Python dependencies
 install_deps() {
   info "Installing Python dependencies"
-  pip install --user beautifulsoup4
+  pip install --user beautifulsoup4 python-dateutil
   
   # Check html_deltags is available
   if ! command -v html_deltags &> /dev/null; then
