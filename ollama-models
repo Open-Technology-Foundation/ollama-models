@@ -1,1 +1,8 @@
-ollama-models.py
+#!/bin/bash
+#shellcheck disable=SC2155,SC1091
+set -euo pipefail
+declare PRG0=$(readlink -en -- "$0")
+declare PRGDIR=$(dirname "$PRG0")
+source "$PRGDIR"/.venv/bin/activate
+"$PRGDIR"/"$(basename -- "$PRG0")".py "$@"
+#fin
